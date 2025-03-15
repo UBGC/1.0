@@ -279,12 +279,13 @@ function createHexagons(rows, cols) {
 
             // Add click event listener to each hexagon
             hexagon.addEventListener('click', () => {
-        let index = [row, col]; // Pass index as an array
-        console.log(index);
-        color = hexagon.style.backgroundColor;
-        let nation = getNationByColor(color);
-        updateProvinceInfoBar(availableNations[nation], index);
-});
+            let index = [row, col]; // Pass index as an array
+            console.log(index);
+            color = hexagon.style.backgroundColor;
+            console.log(color);
+            let nation = getNationByColor(color);
+            updateProvinceInfoBar(availableNations[nation], index);
+            });
 
             hexagons[row][col] = hexagon; // Store hexagon in the 2D array
         }
@@ -327,12 +328,14 @@ const availableNations = [
    new Nation('Romania','rgb(206, 17, 38)', '#CE1126'),
    new Nation('Moldova','rgb(255, 209, 0)', '#FFD100'),
 ];
-
+const seaColor = "";
 function getNationByColor(color) {
-   let n = availableNations.findIndex((nation) => nation.color === color);
-   console.log(`Color checked: ${color}, Nation index: ${n}`); // Debugging log
-   return n;
+    let n;
+    n = availableNations.findIndex((nation) => nation.color === color);
+    console.log(`Color checked: ${color}, Nation index: ${n}`); // Debugging log
+    return n;
 }
+
 var mob = document.getElementById("add");
 // Function to update the province info bar
 function updateProvinceInfoBar(nation, index) {
@@ -381,7 +384,7 @@ function countHexagonsByColor(color) {
 }
 
 // Set an interval to count hexagons every minute
-var selectedNationColor
+var selectedNationColor;
 setInterval(() => {
     const nationSelect = document.getElementById('nation-select');
     const selectedNation = availableNations.find(nation => nation.name === nationSelect.value);
@@ -476,6 +479,7 @@ function updateGameState(selectedNation) {
     nationFlag.src = `${selectedNation.name.toLowerCase()}.png`; // Example: Update the flag image
     nationFlag.style.display = 'block'; // Show the flag
     console.log(`Game state updated for ${selectedNation.name}`); // Debugging log
+    availableNations.push(new Nation('Sea','rgb(0, 170, 255)',' #00aaff'));
 }
 
 // Call the function to display the nation selection UI immediately
@@ -503,13 +507,13 @@ class unit {
         this.speed = speed;
     }
 }
-const allUnits = [
+const landUnits = [
     new unit("M1A1 Abrams", 50, 50, 10, 5,"tank1.png", 3),
     new unit("T80", 25, 40, 8, 5,"tank2.png", 2),
-    new unit("F16", 20, 30, 12, 6,"f16.png", 8),
+    new unit("F16", 20, 30, 12, 6,"f16.png", 15),
     new unit("towed artilerry", 7, 10, 4, 3,"towedArtillery.png", 12 ),
-    new unit("Aircraft carrier", 100, 80, 15, 15, "aircarier.png", 10),
-    new unit("infrantry", 10, 15, 6, 9, "infrantry.png", 11)
+    new unit("infrantry", 10, 15, 6, 9, "infrantry.png", 11),
+    new unit("Leopard 2", 38, 45, 9, 5,"tank3.png", 3)
 ];
 function spawnArmy(index) {
     const armyContainer = document.getElementById('armyContainer');
@@ -518,10 +522,10 @@ function spawnArmy(index) {
     const armySelect = document.createElement('select');
     armySelect.id = 'unit-select';
 
-    allUnits.forEach((unit) => {
+    landUnits.forEach((unit) => {
         const option = document.createElement('option');
         option.value = unit.name;
-        option.text = unit.name;
+        option.text = unit.name + "/price:"  + unit.cost;
         armySelect.appendChild(option);
     });
 
@@ -529,7 +533,7 @@ function spawnArmy(index) {
     armyButton.textContent = 'Spawn Unit';
     armyButton.onclick = () => {
     const selectedUnitName = armySelect.value;
-    const selectedUnit = allUnits.find((unit) => unit.name === selectedUnitName);
+    const selectedUnit = landUnits.find((unit) => unit.name === selectedUnitName);
     console.log(`Spawned unit: ${selectedUnit.name}`); // Debugging log
     // Update the game state with the selected nation
     spawnNewForce(selectedUnit, index);
@@ -546,6 +550,7 @@ function getCountryFlag(index) {
     console.log(`Country flag: flags/${countryName}.png`);
     return `${countryName}.png`;
 }
+const unitElement = document.createElement('div');
 function spawnNewForce(unit, index) {
     // Check if the player has enough cash to spawn the unit
     if (cash >= unit.cost) {
@@ -556,13 +561,14 @@ function spawnNewForce(unit, index) {
         // Get the country flag image
         const countryFlag = getCountryFlag(index);
 
-        // Create a new HTML element to represent the unit
+       // Create a new HTML element to represent the unit
         const unitElement = document.createElement('div');
         unitElement.classList.add('unit');
+        unitElement.speed = unit.speed;
         unitElement.style.backgroundImage = `url(${unit.image})`;
         unitElement.style.width = '25px';
         unitElement.style.height = '15px';
-        unitElement.style.position = 'absolute'; // Add this line
+        unitElement.style.position = 'absolute';
         
 
         const flagElement = document.createElement('img');
@@ -657,10 +663,10 @@ function animateMovement(unitElement, targetRow, targetCol, currentIndex) {
         unitElement.style.top = `${offsetTop + 40}px`;
 
         // Update the hexagon's color to the chosen nation's color
-        if (targetHexagon.style.backgroundColor !== 'rgb(0, 170, 255)' && targetHexagon.style.backgroundColor !== selectedNationColor) {
+        if (targetHexagon.style.backgroundColor !== selectedNationColor) {
     targetHexagon.style.backgroundColor = selectedNationColor;
     hexagons[targetRow][targetCol] = targetHexagon;
-} else if (targetHexagon.style.backgroundColor === 'rgb(0, 170, 255)') {
+} else if (targetHexagon.style.backgroundColor === seaColor ) {
     console.log('Cannot conquer sea province');
 }
         return;
@@ -670,7 +676,7 @@ function animateMovement(unitElement, targetRow, targetCol, currentIndex) {
 
     setTimeout(() => {
         animateMovement(unitElement, targetRow, targetCol, currentIndex);
-    }, 1000);
+    }, 10000 / unitElement.speed);
 }
 
 moveButton.onclick = () => {
@@ -686,13 +692,16 @@ moveButton.onclick = () => {
 
     let targetHexagon = hexagons[targetRow][targetCol];
     let targetColor = targetHexagon.style.backgroundColor;
-    console.log(targetColor)
 
-    // Check if the target hexagon is not the default color or the selected nation's color
-    if (targetColor !== 'rgb(0, 170, 255)' && targetColor !== selectedNationColor) {
-        // Warn the player about moving to enemy territory
-        let warning = confirm("Warning: Moving your army to this hexagon may lead to war. Are you sure you want to proceed?");
-        if (!warning) {
+    // Check if the target hexagon is a sea area
+    if (targetColor === seaColor) {
+        console.log('Cannot conquer sea province');
+        return;
+    }
+
+    if (targetColor == Nation.color) {
+        let stop = confirm("If you send army to the target, you can unluckly start a war. Are you going to continue?");
+        if (stop === true) {
             return;
         }
     }
